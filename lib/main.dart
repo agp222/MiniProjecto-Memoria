@@ -10,7 +10,7 @@ class MemoryGameApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Memory Game',
+      title: 'Juego de Memoria',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -21,7 +21,7 @@ class MemoryGameApp extends StatelessWidget {
       ),
       home: Scaffold(
         body: Center(
-          child: Text('Game Loading...'),
+          child: Text('Cargando..'),
         ),
       ),
     );
