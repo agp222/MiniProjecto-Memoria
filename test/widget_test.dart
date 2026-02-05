@@ -10,20 +10,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_memory_game/main.dart';
 
+/// El sistema define las pruebas unitarias para verificar la integridad de los widgets.
 void main() {
+  /// El sistema ejecuta una prueba de humo para validar la carga inicial de la aplicacion.
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+    // El sistema construye el widget principal y dispara un frame de renderizado.
     await tester.pumpWidget(const MemoryGameApp());
 
-    // Verify that our counter starts at 0.
+    // El sistema verifica la existencia de elementos textuales especificos en la interfaz.
     expect(find.text('0'), findsOneWidget);
     expect(find.text('1'), findsNothing);
 
-    // Tap the '+' icon and trigger a frame.
+    // El sistema simula una interaccion de usuario mediante un toque en un icono.
     await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
 
-    // Verify that our counter has incremented.
+    // El sistema valida que el estado interno haya cambiado tras la interaccion.
     expect(find.text('0'), findsNothing);
     expect(find.text('1'), findsOneWidget);
   });

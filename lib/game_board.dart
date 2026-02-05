@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'models/card_item.dart'; 
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Clase que gestiona la pantalla principal y la logica del juego de memoria.
 class GameBoard extends StatefulWidget {
   const GameBoard({super.key});
 
@@ -10,22 +11,21 @@ class GameBoard extends StatefulWidget {
 }
 
 class _GameBoardState extends State<GameBoard> {
-  // VARIABLES DE ESTADO Y LÓGICA
+  // Variables de control para el estado de las cartas y el flujo del juego.
   List<CardItem> cards = [];
   int? firstSelectedIndex;
   bool isProcessing = false;
   int intentos = 0;
-  int highScore = 0; // Variable para el récord local
+  int highScore = 0; // Almacena el record local recuperado.
 
   @override
   void initState() {
     super.initState();
-    _loadHighScore(); // Carga el récord al iniciar
+    _loadHighScore(); // El sistema recupera el record al iniciar.
     _setupGame();
   }
 
-  /// Inicializa el tablero generando 18 pares de cartas.
-  /// Cumple con el requerimiento de 6x6 (36 cartas).
+  /// El sistema genera 18 pares de cartas para completar la cuadricula de 6x6.
   void _setupGame() {
     List<IconData> icons = [
       Icons.face, Icons.favorite, Icons.star, Icons.home, Icons.audiotrack,
@@ -36,10 +36,11 @@ class _GameBoardState extends State<GameBoard> {
 
     List<CardItem> tempCards = [];
     for (int i = 0; i < icons.length; i++) {
+      // Se añaden dos instancias de cada icono para formar las parejas.
       tempCards.add(CardItem(id: i, icon: icons[i]));
       tempCards.add(CardItem(id: i, icon: icons[i]));
     }
-    tempCards.shuffle();
+    tempCards.shuffle(); // El sistema mezcla la lista aleatoriamente.
     
     setState(() {
       cards = tempCards;
@@ -49,7 +50,7 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
-  /// Carga el puntaje más alto desde el almacenamiento local.
+  /// Recupera el valor del record mas alto desde el almacenamiento local.
   void _loadHighScore() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -57,7 +58,7 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
-  /// Guarda el récord si los intentos actuales son menores al High Score previo.
+  /// Evalua y guarda el record de intentos si el puntaje actual es superior.
   void _saveHighScore() async {
     final prefs = await SharedPreferences.getInstance();
     if (highScore == 0 || intentos < highScore) {
@@ -66,32 +67,33 @@ class _GameBoardState extends State<GameBoard> {
     }
   }
 
-  /// Maneja la lógica de volteo y validación de parejas.
-  /// Requisito: Máximo 2 cartas volteadas simultáneamente.
+  /// Gestiona el evento de seleccion de una carta y la logica de comparacion.
   void _onCardTap(int index) {
+    // El sistema ignora el toque si hay procesos pendientes o la carta ya esta visible.
     if (isProcessing || cards[index].isFaceUp || cards[index].isMatched) return;
 
     setState(() => cards[index].isFaceUp = true);
 
     if (firstSelectedIndex == null) {
+      // El sistema registra el indice de la primera carta seleccionada.
       firstSelectedIndex = index;
     } else {
       setState(() => intentos++);
       isProcessing = true;
       
       if (cards[firstSelectedIndex!].id == cards[index].id) {
-        // MATCH ENCONTRADO
+        // En caso de coincidencia, el sistema bloquea ambas cartas.
         cards[firstSelectedIndex!].isMatched = true;
         cards[index].isMatched = true;
         firstSelectedIndex = null;
         isProcessing = false;
 
-        // Verificar si ganó para guardar el High Score
+        // El sistema comprueba si el usuario ha finalizado el juego.
         if (cards.every((card) => card.isMatched)) {
           _saveHighScore();
         }
       } else {
-        // FALLO: Se ocultan tras 1 segundo
+        // Si no hay coincidencia, el sistema oculta las cartas tras un segundo.
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) {
             setState(() {
@@ -108,8 +110,7 @@ class _GameBoardState extends State<GameBoard> {
 
   @override
   Widget build(BuildContext context) {
-    // --- BONO: RESPONSIVIDAD ---
-    // Usamos MediaQuery para adaptar iconos según el tamaño de pantalla
+    // El sistema calcula el tamaño de los iconos segun el ancho de pantalla.
     double screenWidth = MediaQuery.of(context).size.width;
     double iconSize = screenWidth > 600 ? 35 : 22; 
 
@@ -123,7 +124,7 @@ class _GameBoardState extends State<GameBoard> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _setupGame, // Botón para reiniciar (Instinto de calidad)
+            onPressed: _setupGame, // El sistema reinicia el estado del tablero.
           )
         ],
       ),
@@ -138,25 +139,24 @@ class _GameBoardState extends State<GameBoard> {
         child: SafeArea(
           child: Column(
             children: [
-              // PANEL DE PUNTUACIÓN
+              // El sistema muestra la informacion de intentos y record actual.
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildInfoCard("Récord", highScore == 0 ? "-" : highScore.toString()),
+                    _buildInfoCard("Record", highScore == 0 ? "-" : highScore.toString()),
                     _buildInfoCard("Intentos", intentos.toString()),
                   ],
                 ),
               ),
-              // TABLERO 6x6
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: GridView.builder(
                     itemCount: cards.length,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 6, // REQUISITO 6x6
+                      crossAxisCount: 6, // El sistema genera las 6 columnas solicitadas.
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
                       childAspectRatio: 0.8,
@@ -192,6 +192,7 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
+  /// El sistema genera una tarjeta visual para mostrar datos de puntuacion.
   Widget _buildInfoCard(String title, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
