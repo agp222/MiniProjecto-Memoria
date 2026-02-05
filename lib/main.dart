@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'game_board.dart';
+
 void main() {
   runApp(const MemoryGameApp());
 }
@@ -12,6 +14,7 @@ class MemoryGameApp extends StatelessWidget {
     return MaterialApp(
       title: 'Juego de Memoria',
       debugShowCheckedModeBanner: false,
+      home: const GameBoard(),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepPurple,
