@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
-// Nota: Asumo que ya tienes tu widget MemoryCard. 
-// Si se llama diferente, cambia el nombre aquí abajo o importa tu archivo.
-// Por ahora, he puesto una "MemoryCard" de prueba al final del archivo para que veas el diseño.
+import 'models/card_item.dart'; 
 
 class GameBoard extends StatefulWidget {
   const GameBoard({super.key});
@@ -12,74 +9,125 @@ class GameBoard extends StatefulWidget {
 }
 
 class _GameBoardState extends State<GameBoard> {
+  // VARIABLES DE LÓGICA (Añadidas para que funcione el juego)
+  List<CardItem> cards = [];
+  int? firstSelectedIndex;
+  bool isProcessing = false;
+  int intentos = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupGame();
+  }
+
+  void _setupGame() {
+    List<IconData> icons = [
+      Icons.face, Icons.favorite, Icons.star, Icons.home, Icons.audiotrack,
+      Icons.beach_access, Icons.cake, Icons.directions_car, Icons.pets,
+      Icons.sunny, Icons.eco, Icons.flash_on, Icons.anchor, Icons.ac_unit,
+      Icons.local_pizza, Icons.flight, Icons.celebration, Icons.brush
+    ];
+
+    List<CardItem> tempCards = [];
+    for (int i = 0; i < icons.length; i++) {
+      tempCards.add(CardItem(id: i, icon: icons[i]));
+      tempCards.add(CardItem(id: i, icon: icons[i]));
+    }
+    tempCards.shuffle();
+    setState(() {
+      cards = tempCards;
+      intentos = 0;
+    });
+  }
+
+  void _onCardTap(int index) {
+    if (isProcessing || cards[index].isFaceUp || cards[index].isMatched) return;
+
+    setState(() => cards[index].isFaceUp = true);
+
+    if (firstSelectedIndex == null) {
+      firstSelectedIndex = index;
+    } else {
+      intentos++;
+      isProcessing = true;
+      if (cards[firstSelectedIndex!].id == cards[index].id) {
+        cards[firstSelectedIndex!].isMatched = true;
+        cards[index].isMatched = true;
+        firstSelectedIndex = null;
+        isProcessing = false;
+      } else {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            setState(() {
+              cards[firstSelectedIndex!].isFaceUp = false;
+              cards[index].isFaceUp = false;
+              firstSelectedIndex = null;
+              isProcessing = false;
+            });
+          }
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar transparente para que luzca el fondo
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Memory Game',
-          style: TextStyle(
-            color: Colors.white, 
-            fontWeight: FontWeight.bold,
-            fontSize: 24
-          ),
-        ),
+        title: const Text('Memory Game', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: Container(
-        // 1. Fondo atractivo (Gradient)
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF6A11CB), // Morado vibrante
-              Color(0xFF2575FC), // Azul vibrante
-            ],
+            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              // 2. Panel de Puntuación (Tiempo e Intentos)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildInfoCard("Tiempo", "00:00"),
-                    _buildInfoCard("Intentos", "0"),
+                    _buildInfoCard("Intentos", intentos.toString()),
                   ],
                 ),
               ),
-              
-              const SizedBox(height: 10),
-
-              // 3. La Cuadrícula 6x6 (El corazón del juego)
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: GridView.builder(
-                    // Requisito: 6x6 cartas = 36 items
-                    itemCount: 36, 
+                    itemCount: cards.length,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 6, // 6 columnas (Requisito PDF)
-                      crossAxisSpacing: 8, // Espacio horizontal entre cartas
-                      mainAxisSpacing: 8,  // Espacio vertical entre cartas
-                      childAspectRatio: 0.7, // Ajusta esto para hacerlas más altas o cuadradas
+                      crossAxisCount: 6,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.7,
                     ),
                     itemBuilder: (context, index) {
-                      // AQUÍ es donde tu compañero conectará la lógica.
-                      // Por ahora mostramos el diseño visual.
-                      return const MemoryCard(index: index);
+                      final card = cards[index];
+                      return GestureDetector(
+                        onTap: () => _onCardTap(index),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: card.isFaceUp || card.isMatched ? Colors.white : Colors.white24,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: (card.isFaceUp || card.isMatched)
+                                ? Icon(card.icon, color: Colors.purple, size: 20)
+                                : const Icon(Icons.question_mark, color: Colors.white54),
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -91,61 +139,18 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
-  // Widget auxiliar para las tarjetitas de info (Tiempo/Intentos)
   Widget _buildInfoCard(String title, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white, 
-              fontSize: 20, 
-              fontWeight: FontWeight.bold
-            ),
-          ),
+          Text(title, style: const TextStyle(color: Colors.white70)),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         ],
-      ),
-    );
-  }
-}
-
-// --- WIDGET PROVISIONAL ---
-// Elimina esto cuando importes tu propio widget "MemoryCard"
-class MemoryCard extends StatelessWidget {
-  final int index;
-  const MemoryCard({super.key, required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(2, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          Icons.question_mark, 
-          color: Colors.purple.shade300,
-          size: 20,
-        ),
       ),
     );
   }
